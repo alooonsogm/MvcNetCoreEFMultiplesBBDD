@@ -1,0 +1,34 @@
+﻿@model List<EmpleadosVista>
+
+<h1>Los empleados</h1>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Id Empleado</th>
+            <th>Apellido</th>
+            <th>Oficio</th>
+            <th>Salario</th>
+            <th>Id Departamento</th>
+            <th>Nombre Departamento</th>
+            <th>Localidad</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(EmpleadosVista emp in Model)
+        {
+            <tr>
+                <td>@emp.IdEmpleado</td>
+                <td>@emp.Apellido</td>
+                <td>@emp.Oficio</td>
+                <td>@emp.Salario</td>
+                <td>@emp.IdDepartamento</td>
+                <td>@emp.Departamento</td>
+                <td>@emp.Localidad</td>
+                <td>
+                    <a class="btn btn-info" asp-controller="Empleados" asp-action="Details" asp-route-id="@emp.IdEmpleado">Details</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
