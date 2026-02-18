@@ -5,6 +5,8 @@ using MvcNetCoreEFMultiplesBBDD.Data;
 using MvcNetCoreEFMultiplesBBDD.Models;
 using Mysqlx.Crud;
 using Oracle.ManagedDataAccess.Client;
+using Org.BouncyCastle.Utilities.Zlib;
+using System.Collections.Generic;
 using System.Data;
 using static Azure.Core.HttpHeader;
 using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -30,19 +32,22 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 //END;
 
 //create procedure SP_INSERT_EMPLEADOS_DINAMICO
-//(p_apellido EMP.APELLIDO%TYPE, p_oficio EMP.OFICIO%TYPE, p_dir EMP.DIR%TYPE, p_salario EMP.SALARIO%TYPE, p_comision EMP.COMISION%TYPE, p_nombreDepart DEPT.DNOMBRE%TYPE)
+//(p_apellido EMP.APELLIDO%TYPE, p_oficio EMP.OFICIO%TYPE, p_dir EMP.DIR%TYPE, p_salario EMP.SALARIO%TYPE, p_comision EMP.COMISION%TYPE, p_nombreDepart DEPT.DNOMBRE%TYPE, p_id OUT EMP.EMP_NO%TYPE)
 //AS
-//p_idEmpleado EMP.EMP_NO%TYPE;
 //p_idDepartamento DEPT.DEPT_NO%TYPE;
 //BEGIN
-//    SELECT MAX(EMP_NO)+1 INTO p_idEmpleado FROM EMP;
-//    SELECT DEPT_NO INTO p_idDepartamento FROM DEPT WHERE DNOMBRE=p_nombreDepart;
-//    INSERT INTO EMP VALUES(p_idEmpleado, p_apellido, p_oficio, p_dir, SYSDATE, p_salario, p_comision, p_idDepartamento);
-//    COMMIT;
+//    SELECT MAX(EMP_NO)+1 INTO p_id FROM EMP;
+//SELECT DEPT_NO INTO p_idDepartamento FROM DEPT WHERE DNOMBRE=p_nombreDepart;
+//INSERT INTO EMP VALUES(p_id, p_apellido, p_oficio, p_dir, SYSDATE, p_salario, p_comision, p_idDepartamento);
+//COMMIT;
 //END;
 
+//SET SERVEROUTPUT ON;
+//DECLARE
+//    v_id_nuevo EMP.EMP_NO%TYPE;
 //BEGIN
-//    SP_INSERT_EMPLEADOS_DINAMICO('PRUEBA2', 'PRUEBA2', 7839, 10, 5, 'CONTABILIDAD');
+//    SP_INSERT_EMPLEADOS_DINAMICO('PRUEBA3', 'PRUEBA3', 7839, 10, 5, 'CONTABILIDAD', v_id_nuevo);
+//    DBMS_OUTPUT.PUT_LINE('El ID generado para el nuevo empleado es: ' || v_id_nuevo);
 //END;
 #endregion
 
@@ -78,10 +83,10 @@ namespace MvcNetCoreEFMultiplesBBDD.Repositories
             return await consulta.FirstOrDefaultAsync();
         }
 
-        public async Task InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart)
+        public async Task<int> InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart)
         {
             string sql = "begin ";
-            sql += " SP_INSERT_EMPLEADOS_DINAMICO(:p_apellido, :p_oficio, :p_dir, :p_salario, :p_comision, :p_nombreDepart); ";
+            sql += " SP_INSERT_EMPLEADOS_DINAMICO(:p_apellido, :p_oficio, :p_dir, :p_salario, :p_comision, :p_nombreDepart, :p_id); ";
             sql += " end;";
             OracleParameter pamApe = new OracleParameter(":p_apellido", apellido);
             OracleParameter pamOfi = new OracleParameter(":p_oficio", oficio);
@@ -89,7 +94,14 @@ namespace MvcNetCoreEFMultiplesBBDD.Repositories
             OracleParameter pamSala = new OracleParameter(":p_salario", salario);
             OracleParameter pamComi = new OracleParameter(":p_comision", comision);
             OracleParameter pamDepart = new OracleParameter(":p_nombreDepart", nombreDepart);
-            await this.context.Database.ExecuteSqlRawAsync(sql, pamApe, pamOfi, pamDir, pamSala, pamComi, pamDepart);
+
+            OracleParameter pamId = new OracleParameter();
+            pamId.ParameterName = ":p_id";
+            pamId.OracleDbType = OracleDbType.Int32;
+            pamId.Direction = ParameterDirection.Output;
+
+            await this.context.Database.ExecuteSqlRawAsync(sql, pamApe, pamOfi, pamDir, pamSala, pamComi, pamDepart, pamId);
+            return Convert.ToInt32(pamId.Value.ToString());
         }
     }
 }

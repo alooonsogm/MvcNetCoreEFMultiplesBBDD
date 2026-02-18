@@ -33,8 +33,8 @@ namespace MvcNetCoreEFMultiplesBBDD.Controllers
         [HttpPost]
         public async Task<IActionResult> Insert(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart)
         {
-            await this.repo.InsertEmpleadosAsync(apellido, oficio, dir, salario, comision, nombreDepart);
-            return RedirectToAction("Index");
+            int idGenerado = await this.repo.InsertEmpleadosAsync(apellido, oficio, dir, salario, comision, nombreDepart);
+            return RedirectToAction("Details", new { id = idGenerado });
         }
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using MvcNetCoreEFMultiplesBBDD.Data;
 using MvcNetCoreEFMultiplesBBDD.Models;
+using System.Data;
 
 #region VISTAS/PROCEDURE
 //CREATE view V_EMPLEADOS
@@ -22,16 +23,19 @@ using MvcNetCoreEFMultiplesBBDD.Models;
 //EXEC SP_ALL_VEMPLEADOS
 
 //CREATE PROCEDURE SP_INSERT_EMPLEADOS_DINAMICO
-//(@apellido nvarchar(50), @oficio nvarchar(50), @dir int, @salario int, @comision int, @nombreDepart nvarchar(50))
+//(@apellido nvarchar(50), @oficio nvarchar(50), @dir int, @salario int, @comision int, @nombreDepart nvarchar(50), @id int out)
 //AS
 //	DECLARE @idDepart int
 //	SELECT @idDepart = DEPT_NO FROM DEPT WHERE DNOMBRE=@nombreDepart
-//	DECLARE @idEmpleado int
-//	SELECT @idEmpleado = MAX(EMP_NO) + 1 FROM EMP
-//	insert into EMP values (@idEmpleado, @apellido, @oficio, @dir, GETDATE(), @salario, @comision, @idDepart);
+//	SELECT @id = MAX(EMP_NO) + 1 FROM EMP
+//	insert into EMP values (@id, @apellido, @oficio, @dir, GETDATE(), @salario, @comision, @idDepart);
 //GO
 
 //exec SP_INSERT_EMPLEADOS_DINAMICO 'PACO', 'ANALISTA', 7839, 1, 1, 'PRODUCCION'
+
+//DECLARE @idGenerado INT
+//EXEC SP_INSERT_EMPLEADOS_DINAMICO 'Sánchez', 'ANALISTA', 7839, 1, 1, 'PRODUCCION', @idGenerado OUTPUT
+//print @idGenerado
 #endregion
 
 namespace MvcNetCoreEFMultiplesBBDD.Repositories
@@ -60,16 +64,21 @@ namespace MvcNetCoreEFMultiplesBBDD.Repositories
             return await consulta.FirstOrDefaultAsync();
         }
 
-        public async Task InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart)
+        public async Task<int> InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart)
         {
-            string sql = "SP_INSERT_EMPLEADOS_DINAMICO @apellido, @oficio, @dir, @salario, @comision, @nombreDepart";
+            string sql = "SP_INSERT_EMPLEADOS_DINAMICO @apellido, @oficio, @dir, @salario, @comision, @nombreDepart, @id OUT";
             SqlParameter pamApe = new SqlParameter("@apellido", apellido);
             SqlParameter pamOfi = new SqlParameter("@oficio", oficio);
             SqlParameter pamDir = new SqlParameter("@dir", dir);
             SqlParameter pamSala = new SqlParameter("@salario", salario);
             SqlParameter pamComi = new SqlParameter("@comision", comision);
             SqlParameter pamDepart = new SqlParameter("@nombreDepart", nombreDepart);
-            await this.context.Database.ExecuteSqlRawAsync(sql, pamApe, pamOfi, pamDir, pamSala, pamComi, pamDepart);
+            SqlParameter pamId = new SqlParameter();
+            pamId.ParameterName = "@id";
+            pamId.SqlDbType = SqlDbType.Int;
+            pamId.Direction = ParameterDirection.Output;
+            await this.context.Database.ExecuteSqlRawAsync(sql, pamApe, pamOfi, pamDir, pamSala, pamComi, pamDepart, pamId);
+            return (int)pamId.Value;
         }
     }
 }

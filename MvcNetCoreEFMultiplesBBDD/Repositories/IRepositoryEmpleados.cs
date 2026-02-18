@@ -6,6 +6,6 @@ namespace MvcNetCoreEFMultiplesBBDD.Repositories
     {
         Task<List<EmpleadosVista>> GetVistaEmpleadosAsync();
         Task<EmpleadosVista> FindVistaEmpleadosAsync(int idEmpleado);
-        Task InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart);
+        Task<int> InsertEmpleadosAsync(string apellido, string oficio, int dir, int salario, int comision, string nombreDepart);
     }
 }
